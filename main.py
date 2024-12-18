@@ -1,25 +1,50 @@
 import os
+from dotenv import load_dotenv
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import google.generativeai as genai
 
-# Configure the API key
-api_key = os.getenv("GOOGLE_API_KEY")
-if not api_key:
-    raise ValueError("API key not found. Set the GOOGLE_API_KEY environment variable.")
+# Load environment variables from the .env file
+load_dotenv()
 
-genai.configure(api_key=api_key)
+# Get the Telegram bot token and Google API key from environment variables
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# Load the Generative AI model
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Configure the Google Generative AI with the API key
+genai.configure(api_key=GOOGLE_API_KEY)
 
-print("Chatbot is running. Type 'exit' to quit.")
+# Define a start command
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Hello! I am your chatbot powered by Google Generative AI. How can I assist you?")
 
-while True:
-    user_input = input("You: ")
-    if user_input.lower() == "exit":
-        print("Goodbye!")
-        break
+# Define a handler for regular messages (chatbot functionality)
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_message = update.message.text
+    
+    # Generate a response using Google Generative AI
     try:
-        response = model.generate_content(user_input)
-        print(f"Bot: {response.text}")
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(user_message)
+        bot_reply = response.text
     except Exception as e:
-        print(f"An error occurred: {e}")
+        bot_reply = f"An error occurred while processing your message: {str(e)}"
+
+    # Send the generated response back to the user
+    await update.message.reply_text(bot_reply)
+
+# Main function to run the bot
+def main():
+    # Initialize the bot application
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+
+    # Add handlers
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    # Start the bot
+    print("Bot is running...")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
