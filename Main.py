@@ -1,7 +1,7 @@
 import openai
-
+API_KEY_OPENAI=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
 # Set your API key
-openai.api_key = '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'
+openai.api_key = 'API_KEY_OPENAI'
 
 def chat_with_gpt(prompt):
     try:
