@@ -1,27 +1,25 @@
-import openai
-API_KEY_OPENAI=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
-# Set your API key
-openai.api_key = 'API_KEY_OPENAI'
+import os
+import google.generativeai as genai
 
-def chat_with_gpt(prompt):
+# Configure the API key
+api_key = os.getenv("GOOGLE_API_KEY")
+if not api_key:
+    raise ValueError("API key not found. Set the GOOGLE_API_KEY environment variable.")
+
+genai.configure(api_key=api_key)
+
+# Load the Generative AI model
+model = genai.GenerativeModel("gemini-1.5-flash")
+
+print("Chatbot is running. Type 'exit' to quit.")
+
+while True:
+    user_input = input("You: ")
+    if user_input.lower() == "exit":
+        print("Goodbye!")
+        break
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # or "gpt-4" if available
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response['choices'][0]['message']['content'].strip()
+        response = model.generate_content(user_input)
+        print(f"Bot: {response.text}")
     except Exception as e:
-        return f"An error occurred: {e}"
-
-def main():
-    print("Chatbot is running. Type 'exit' to quit.")
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() == 'exit':
-            print("Goodbye!")
-            break
-        response = chat_with_gpt(user_input)
-        print(f"Bot: {response}")
-
-if __name__ == "__main__":
-    main()
+        print(f"An error occurred: {e}")
